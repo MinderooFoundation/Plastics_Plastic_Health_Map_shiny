@@ -43,36 +43,7 @@ source("helper.R")
 
 # Define UI ---- 
 
-inactivity <- "function idleTimer() {
-var t = setTimeout(logout, 120000);
-window.onmousemove = resetTimer; // catches mouse movements
-window.onmousedown = resetTimer; // catches mouse movements
-window.onclick = resetTimer;     // catches mouse clicks
-window.onscroll = resetTimer;    // catches scrolling
-window.onkeypress = resetTimer;  //catches keyboard actions
-
-function logout() {
-window.close();  //close the window
-}
-
-function resetTimer() {
-clearTimeout(t);
-t = setTimeout(logout, 120000);  // time is in milliseconds (1000 is 1 second)
-}
-}
-idleTimer();"
-
-
-# data.frame with credentials info
-credentials <- data.frame(
-  user = c("Minderoo_Guest"),
-  password = c("#AhmedElagali"),
-  # comment = c("alsace", "auvergne", "bretagne"), %>% 
-  stringsAsFactors = FALSE
-)
-
-ui <- secure_app(head_auth = tags$script(inactivity),
-                 fluidPage(
+ui <-                 fluidPage(
   theme = shinythemes::shinytheme("flatly"),
   navbarPage("Systematic Evidence Map",
     
@@ -519,7 +490,7 @@ box(
 )
 
     
-)  
+
 
     
 
@@ -529,11 +500,7 @@ box(
 
 # Server logic ####
 server <- function(input, output, session) {
-  result_auth <- secure_server(check_credentials = check_credentials(credentials))
-
-  output$res_auth <- renderPrint({
-    reactiveValuesToList(result_auth)
-  })
+  
   
  
   
