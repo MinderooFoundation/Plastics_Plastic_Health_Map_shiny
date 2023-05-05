@@ -12,7 +12,12 @@
   if (!require('dplyr')) install.packages('dplyr'); library('dplyr')
   if (!require('shinydisconnect')) install.packages('shinydisconnect'); library('shinydisconnect')
   if (!require('shinymanager')) install.packages('shinymanager'); library('shinymanager')
+  if (!require('xlsx')) install.packages('xlsx'); library('xlsx')
+
   
+  here::set_here()
+  print(getwd())
+  here::dr_here()
   
 ###Functions####  
 
@@ -27,11 +32,13 @@
   
 ###Dataframes####  
   
+  #df <- readxl::read_excel("C:/Users/ymulders/OneDrive - Minderoo/Documents/Minderoo/VC_Scoping_review/Output/shiny_df_condensed_cas.xlsx")
+  
   df <- readxl::read_excel(here("shiny_df_condensed_cas.xlsx"))
   
-  df_additives      <- readxl::read_excel(here("additives.xlsx")) 
+  df_additives      <- readxl::read_excel(here("additives_n.xlsx")) 
   df_polymers       <- readxl::read_excel(here("polymers.xlsx"))
-  df_healthoutcomes <- readxl::read_xlsx(here("290922_Health_classes.xlsx"))
+  df_healthoutcomes <- readxl::read_xlsx(here("health_outcomes_mastersheet.xlsx"))
   df_patch_test     <- readRDS(here("patch_test.rds"))
   
   # df_additives$cas_n=cbind(df_additives$CAS, df_polymers$CAS)
@@ -42,11 +49,38 @@
                               CAS)
            )
   
-  df_polymers <- df_polymers %>% 
-    mutate(cas_names = ifelse(!is.na(CAS),
-                              str_glue("{CAS} [{name}]"),
-                              CAS)
-           )
+  df_additives <- df_additives %>% 
+    mutate(PFAS = ifelse(!is.na(PFAS),
+                         "PFAS",
+                         PFAS)) %>%
+    unite("add_function",
+          Plasticiser, `Flame retardant`, PFAS,
+          sep = "; ",
+          remove = T,
+          na.rm = T) %>%
+   #   mutate(production_volume = case_when(production_volume == "missing" ~ "No data available",
+   #                                       is.na(production_volume)       ~ production_volume,
+   #                                       TRUE                           ~ production_volume),
+   #         level_of_concern = case_when(level_of_concern == "mising"    ~ "No data available",
+   #                                      is.na(level_of_concern)        ~ level_of_concern,
+   #                                      TRUE                           ~ level_of_concern),
+   #         source = str_replace_all(source,
+   #                                  "; NA",
+   #                                  "")
+   #  ) %>%
+    mutate(...27 = case_when(...27 == "Other" & add_function == "Plasticiser" ~ "Other plasticizers",
+                             ...27 == "Other" & add_function == "Flame retardant" ~ "Other flame retardants",
+                             `Name in Shiny App` == "Total/Sum Hexabromocyclododecane" ~ "Other flame retardants",
+                             ...27 == "Other" ~ "Other mixed use",
+                             TRUE ~ ...27)
+    )
+  
+  
+  #df_polymers <- df_polymers %>% 
+    # mutate(cas_names = ifelse(!is.na(CAS),
+    #                           str_glue("{CAS} [{name}]"),
+    #                           CAS)
+    #        )
   
   df <- df %>% 
     mutate(cas_names = ifelse(!is.na(cas),
@@ -83,7 +117,9 @@ sel <- NULL
                   "PBBs", 
                   "OPEs",
                   "Polymers",
-                  "Other")
+                  "Other flame retardants",
+                  "Other plasticizers",
+                  "Other mixed use")
   
 age_order <- c("Prenatal (<0)",
                "Neonate (0-1 mnth)",
@@ -106,6 +142,7 @@ age_order <- c("Prenatal (<0)",
                        "#a51930",
                        "#FF4F00",
                        "#FFCD00",
+                       "#ad985f",
                        "#93af3e",
                        "#4d9d9d",
                        "#21453E",
@@ -127,6 +164,17 @@ age_order <- c("Prenatal (<0)",
                    axis.text.y = element_text(size = 12)
   )
   
+  
+  
+# A function factory for getting integer y-axis values.
+  integer_breaks <- function(n = 5, ...) {
+    fxn <- function(x) {
+      breaks <- floor(pretty(x, n, ...))
+      names(breaks) <- attr(breaks, "labels")
+      breaks
+    }
+    return(fxn)
+  }  
   
   
 ########################### Search function####

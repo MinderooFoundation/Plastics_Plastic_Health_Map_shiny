@@ -25,7 +25,7 @@ source("helper.R")
 # 
 # - remove cut off percentage from detailed heatmaps ... (AE)  Task done
 #
-# - never show decimals for year in the chemicals over time graph (e.g. if the year range is from 2000 to 2021, there are years like 2012.5) (YM) DONE
+# - never show decimals for year in the chemicals over time graph (e.g. if the year range is from 2000 to 2022, there are years like 2012.5) (YM) DONE
 #
 
 
@@ -43,8 +43,49 @@ source("helper.R")
 
 # Define UI ---- 
 
-ui <-                 fluidPage(
+# inactivity <- "function idleTimer() {
+# var t = setTimeout(logout, 120000);
+# window.onmousemove = resetTimer; // catches mouse movements
+# window.onmousedown = resetTimer; // catches mouse movements
+# window.onclick = resetTimer;     // catches mouse clicks
+# window.onscroll = resetTimer;    // catches scrolling
+# window.onkeypress = resetTimer;  //catches keyboard actions
+# 
+# function logout() {
+# window.close();  //close the window
+# }
+# 
+# function resetTimer() {
+# clearTimeout(t);
+# t = setTimeout(logout, 120000);  // time is in milliseconds (1000 is 1 second)
+# }
+# }
+# idleTimer();"
+# 
+# 
+# # data.frame with credentials info
+# credentials <- data.frame(
+#   user = c("Minderoo_Guest"),
+#   password = c("#AhmedElagali"),
+#   # comment = c("alsace", "auvergne", "bretagne"), %>% 
+#   stringsAsFactors = FALSE
+# )
+# 
+# ui <- secure_app(head_auth = tags$script(inactivity),
+#                  fluidPage(style = "padding: 0px;", # no gap in navbar
+
+# 
+ ui <- fluidPage(style = "padding: 0px;", # no gap in navbar
   theme = shinythemes::shinytheme("flatly"),
+  # actionButton("logout", "Help", icon = icon("help"),
+  #              style = "position: absolute; top: 5px; right: 5px; z-index:10000;",
+  #              onclick="window.location.href='https://www.minderoo.org/plastics-and-human-health/'"),
+  # actionButton("logout", "FAQs?", icon = icon(""),
+  #              style = "position: absolute; top: 5px; right: 80px; z-index:10000;",
+  #              onclick="window.location.href='https://www.minderoo.org/plastics-and-human-health/'"),
+  actionButton("logout", "Home Page", icon = icon("home"),
+               style = "position: absolute; top: 5px; right: 5px; z-index:10000;",
+               onclick="window.location.href='https://osf.io/fhw7d/'"),
   navbarPage("Systematic Evidence Map",
     
 ## Overview tab ====         
@@ -57,10 +98,10 @@ ui <-                 fluidPage(
                     style="text-align: center;"),
             sliderInput("range", "Select the year",
                      min = 1961, 
-                     max = 2021,
+                     max = 2022,
                      sep = "", 
                      ticks = F,
-                     value = c(1961, 2021)
+                     value = c(1961, 2022)
                      ),
             shinyWidgets::pickerInput("classInput", "Select chemical class",
                         choices  = levels(factor(df$class, levels = chem_order)),
@@ -154,10 +195,10 @@ tabPanel("Heatmap Health",
                  style="text-align: center;"),
              sliderInput("range2", "Select the year",
                          min   = 1961, 
-                         max   = 2021,
+                         max   = 2022,
                          sep   = "", 
                          ticks = F,
-                         value = c(1961, 2021)
+                         value = c(1961, 2022)
              ),
              shinyWidgets::pickerInput("healthInput2", "Select ICD categories",
                                        # choices  = levels(factor(df$level0, levels = hom_order_in)),
@@ -248,10 +289,10 @@ tabPanel("Heatmap Chemicals",
                  style="text-align: center;"),
              sliderInput("range3", "Select the year",
                          min   = 1961, 
-                         max   = 2021,
+                         max   = 2022,
                          sep   = "", 
                          ticks = F,
-                         value = c(1961, 2021)
+                         value = c(1961, 2022)
              ),
              shinyWidgets::pickerInput("classInput3", "Select chemical class",
                                        choices  = levels(factor(df$class, levels = chem_order)),
@@ -500,7 +541,11 @@ box(
 
 # Server logic ####
 server <- function(input, output, session) {
-  
+  # result_auth <- secure_server(check_credentials = check_credentials(credentials))
+  # 
+  # output$res_auth <- renderPrint({
+  #   reactiveValuesToList(result_auth)
+  # })
   
  
   
@@ -581,9 +626,11 @@ server <- function(input, output, session) {
       
       chem_order1 <- factor(input$classInput, level = c("Bisphenols",
                                                         "PFAS",
-                                                        "Phthalates",
                                                         "PBBs", 
-                                                        "Other",
+                                                        "Phthalates",
+                                                        "Other mixed use",
+                                                        "Other flame retardants",
+                                                        "Other plasticizers",
                                                         "OPEs",
                                                         "PBDEs",
                                                         "PCBs",
@@ -614,13 +661,14 @@ label_order <- wdf %>%
             complete(class, 
                      year = input$range[1]:input$range[2], 
                      fill = list(`n()` = 0)) %>%
-            filter(year  != "2021") %>%
+            filter(year  != "2022") %>%
             group_by(class, 
                      year) %>%
             summarise(n = sum(!is.na(refid))) %>%
-           ggplot(aes(x = year,
+           ggplot(aes(x = as.integer(year),
                       y = n)
                  ) +
+            scale_x_continuous(breaks = integer_breaks()) +
             geom_area(aes(fill = factor(class, level = chem_order1)), 
                       position = "stack", 
                       alpha    = 0.7,
@@ -628,14 +676,14 @@ label_order <- wdf %>%
                       ) +
             theme_classic()+
             scale_fill_manual(labels = label_order,
-                              values = min_pal_qual[c(3:10,2, 1)]
+                              values = min_pal_qual[c(2:11,1)]
                               ) +
             labs(title = "D. Published articles over time",
                  x     = "Year", 
                  y     = "Published articles per year", 
                  fill  = "Chemical classes\n(number of articles)") +
             theme_sr +
-            theme(legend.position   = c(.18,.7),
+            theme(legend.position   = c(.25,.7),
                   legend.background = element_rect(fill   = alpha("white", 0.7),
                                                    colour = "black"),
                   axis.title        = element_text(size   = 12)
@@ -809,7 +857,7 @@ main_plot <- wdf %>%
               panel.background = element_rect(fill = NA, 
                                               colour = "black", 
                                               size = 1),
-              axis.text.x      = element_text(hjust = 1,vjust = 1, angle = 75)
+              axis.text.x      = element_text(hjust = 1,vjust = 0.5, angle = 90)
         )
       
 bar_exp <- wdf %>%
@@ -871,16 +919,16 @@ bar_hom <- wdf %>%
   
         theme_sr +
         theme(axis.text.y = element_blank(),
-              axis.text.x = element_text(hjust = 1,vjust = 1, angle = 75)
+              axis.text.x = element_text(hjust = 1, vjust = 0.5, angle = 90)
               )
       
       
 Hom_exp_map <- (main_plot +  ggtitle("A. Articles combining chemical class exposures\nand health outcomes") + title_theme) +
   (bar_hom +  ggtitle("B. Articles including\nlisted health outcomes") + title_theme  + 
-     theme(axis.title.x = element_text(margin = margin(t = -30, unit = "pt"))))+
+     theme(axis.title.x = element_text(margin = margin(t = -150, unit = "pt"))))+
   plot_spacer() + plot_spacer() +
   (bar_exp + ggtitle("C. Articles including listed\nchemical class exposure") + title_theme +
-     theme(axis.title.y = element_text(margin = margin(r = -150, unit = "pt")),
+     theme(axis.title.y = element_text(margin = margin(r = -200, unit = "pt")),
            plot.title = element_text(vjust = -15))) + 
   guide_area()+
   plot_layout(ncol = 2, nrow = 3, 
@@ -1580,6 +1628,7 @@ print(plot5)
     head(df_polymers <- df_polymers %>%
            select("Name Extracted" = name,
                   CAS, 
+                  "Abbreviation" = 'abb',
                   "Synonyms" = synonyms, 
                   "Tags" = tags)
     )
