@@ -86,7 +86,7 @@ source("helper.R")
   actionButton("logout", "Home Page", icon = icon("home"),
                style = "position: absolute; top: 5px; right: 5px; z-index:10000;",
                onclick="window.location.href='https://osf.io/fhw7d/'"),
-  navbarPage("Systematic Evidence Map",
+  navbarPage("Plastic Heat Map",
     
 ## Overview tab ====         
     tabPanel("Overview",
