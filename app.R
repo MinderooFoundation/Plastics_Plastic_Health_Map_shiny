@@ -8,7 +8,7 @@ source("helper.R")
 #
 # - alpha log1p(n) reflected in legend bar - low priority
 #
-
+# It is Yannick and Ahmed repo
 #
 ##### fixed bugs #### 
 # - table in detailed heatmaps show only references for plot B, not plot A ...(AE) ---- Task done
