@@ -12,12 +12,12 @@
   if (!require('dplyr')) install.packages('dplyr'); library('dplyr')
   if (!require('shinydisconnect')) install.packages('shinydisconnect'); library('shinydisconnect')
   if (!require('shinymanager')) install.packages('shinymanager'); library('shinymanager')
-  if (!require('xlsx')) install.packages('xlsx'); library('xlsx')
+  #if (!require('xlsx')) install.packages('xlsx'); library('xlsx')
 
   
-  here::set_here()
-  print(getwd())
-  here::dr_here()
+ # here::set_here()
+ # print(getwd())
+ # here::dr_here()
   
 ###Functions####  
 
@@ -36,14 +36,39 @@
   
   df <- readxl::read_excel(here("shiny_df_condensed_cas.xlsx"))
   
-  df_additives      <- readxl::read_excel(here("additives_n.xlsx")) 
-  df_polymers       <- readxl::read_excel(here("polymers.xlsx"))
-  df_healthoutcomes <- readxl::read_xlsx(here("health_outcomes_mastersheet.xlsx"))
+  df_additives  <- readxl::read_xlsx(here("final_chem_list.xlsx"), sheet = "Additives") %>% 
+    janitor::row_to_names(row_number = 2) %>% janitor::clean_names() %>% 
+    select("IUPAC"                            = chemical_name_mainly_iupac_from_pubchem, 
+           "Name in Shiny App"                = name_in_shiny_app,
+           "Synonyms"                         = synonyms, 
+           "CAS"                              = cas, 
+           "Metabolites"                      = metabolites, 
+           "...27"                            = na,
+           "Compound group / classification"  = compound_group_classification,
+           "Compound group / classification2" = compound_group_classification_2,
+           "Compound group / classification3" = compound_group_classification_3,
+           "Compound group / classification4" = compound_group_classification_4,
+           "Compound group / classification5" = compound_group_classification_5,
+           "Plasticiser"                      = plasticiser, 
+           "Flame retardant"                  = flame_retardant, 
+           "PFAS"                             = pfas) %>% 
+    mutate(CAS = str_replace_all(CAS, "\"", ""))
+  
+
+  #df_polymers   <- readxl::read_xlsx(here("final_chem_list.xlsx"), sheet = "Polymers") #%>% janitor::row_to_names(row_number = 1)
+  #df_patch_test <- readxl::read_xlsx(here("final_chem_list.xlsx"), sheet = "Patch Test Series")
+  
+  #df_additives      <- readxl::read_excel(here("additives_n.xlsx")) 
+  #df_additives      <- read.csv(here("additives_n.csv")) 
+  #df_polymers       <- readxl::read_excel(here("polymers.xlsx"))
+  df_polymers       <- read.csv(here("polymers.csv"))
   df_patch_test     <- readRDS(here("patch_test.rds"))
   
+  df_healthoutcomes <- readxl::read_xlsx(here("health_outcomes_mastersheet.xlsx"))
   # df_additives$cas_n=cbind(df_additives$CAS, df_polymers$CAS)
  
   df_additives <- df_additives %>% 
+    # mutate(CAS, gsub('"', "", CAS))
     mutate(cas_names = ifelse(!is.na(CAS),
                               str_glue("{CAS} [{`Name in Shiny App`}]"),
                               CAS)
